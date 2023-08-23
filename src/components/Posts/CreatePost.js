@@ -61,18 +61,13 @@ function CreatePost({ onPostCreated }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const formDataToSend = new FormData();
-    formDataToSend.append("title", formData.title);
-    formDataToSend.append("content", formData.content);
-    formDataToSend.append("image", formData.image);
     try {
       const response = await authApi().post(
-        endpoints["create-post"],
-        formDataToSend
+        endpoints["create-post"],formData
       );
 
       if (response.status === 201) {
-        onPostCreated(formDataToSend);
+        onPostCreated(formData);
         console.log("oke");
         // Handle successful registration
         navigate("/");

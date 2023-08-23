@@ -5,6 +5,7 @@ import  { endpoints } from "../../config/apiConfig";
 import apiConfig from "../../config/apiConfig";
 function Home() {
   const [posts, setPosts] = useState([]);
+  const [count, setCount] = useState(0)
   useEffect(() => {
     apiConfig
       .get(endpoints["posts"])
@@ -12,11 +13,12 @@ function Home() {
         const reversedPosts = response.data.reverse();
         setPosts(reversedPosts);
       });
-  }, [posts]);
+  }, [count]);
 
   const handlePostCreated = (newPost) => {
     // Thêm bài viết mới vào danh sách bài viết
     setPosts([newPost, ...posts]);
+    setCount(count + 1)
   };
   return (
     <>
