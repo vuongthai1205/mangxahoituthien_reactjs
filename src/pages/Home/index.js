@@ -7,12 +7,15 @@ function Home() {
   const [posts, setPosts] = useState([]);
   const [count, setCount] = useState(0)
   useEffect(() => {
-    apiConfig
+    const renderListPost = () => {
+      apiConfig
       .get(endpoints["posts"])
       .then((response) => {
         const reversedPosts = response.data.reverse();
         setPosts(reversedPosts);
       });
+    }
+    renderListPost()
   }, [count]);
 
   const handlePostCreated = (newPost) => {
