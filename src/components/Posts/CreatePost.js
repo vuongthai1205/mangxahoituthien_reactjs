@@ -10,7 +10,10 @@ import {
 } from "firebase/storage";
 import { useState } from "react";
 import { authApi, endpoints } from "../../config/apiConfig";
+import { useContext } from "react";
+import { MyUserContext } from "../../App";
 function CreatePost({ onPostCreated }) {
+  const [user,dispatch] = useContext(MyUserContext);
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: "",
@@ -57,30 +60,32 @@ function CreatePost({ onPostCreated }) {
       );
     }
   };
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const formDataToSend = new FormData();
-    formDataToSend.append("title", formData.title);
-    formDataToSend.append("content", formData.content);
-    formDataToSend.append("image", formData.image);
+    
+    if (!user) {
+      // Người dùng chưa xác thực, chuyển hướng đến trang đăng nhập
+      navigate("/login");
+      return;
+    }
+  
     try {
       const response = await authApi().post(
         endpoints["create-post"],
-        formDataToSend
+        formData
       );
-
+  
       if (response.status === 201) {
-        onPostCreated(formDataToSend);
+        onPostCreated(formData);
         console.log("oke");
-        // Handle successful registration
+        // Xử lý đăng bài viết thành công
         navigate("/");
       } else {
-        // Handle registration error
+        // Xử lý lỗi khi đăng bài viết
       }
     } catch (error) {
-      // Handle Axios error
+      // Xử lý lỗi từ Axios
     }
   };
 
