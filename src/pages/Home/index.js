@@ -1,32 +1,29 @@
-import CreatePost from "../../components/Posts/CreatePost";
+import CreateAndUpdatePost from "../../components/Posts/CreateAndUpdatePost";
 import ListPost from "../../components/Posts/ListPost";
-import { useEffect, useState } from "react";
-import  { endpoints } from "../../config/apiConfig";
-import apiConfig from "../../config/apiConfig";
+import {useState } from "react";
+import { Button } from "react-bootstrap";
 function Home() {
-  const [posts, setPosts] = useState([]);
-  const [count, setCount] = useState(0)
-  useEffect(() => {
-    const renderListPost = () => {
-      apiConfig
-      .get(endpoints["posts"])
-      .then((response) => {
-        const reversedPosts = response.data.reverse();
-        setPosts(reversedPosts);
-      });
-    }
-    renderListPost()
-  }, [count]);
+  const [count, setCount] = useState(0);
 
-  const handlePostCreated = (newPost) => {
-    // Thêm bài viết mới vào danh sách bài viết
-    setPosts([newPost, ...posts]);
-    setCount(count + 1)
+  const handlePostCreated = () => {
+    setCount(count + 1);
   };
+
+  const [show, setShow] = useState(false);
+
+  const handleClose = () => setShow(false);
+  const handleShow = () => setShow(true);
   return (
     <>
-      <CreatePost  onPostCreated={handlePostCreated}/>
-      <ListPost posts={posts} />
+      <Button className="my-4" variant="primary" onClick={handleShow}>
+        Tạo bài viết
+      </Button>
+      <CreateAndUpdatePost
+        onPostCreated={handlePostCreated}
+        showPopup={show}
+        closePopup={handleClose}
+      />
+      <ListPost onPostCreated={handlePostCreated} onCount={count} />
     </>
   );
 }

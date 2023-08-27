@@ -2,15 +2,56 @@ import Row from "react-bootstrap/Row";
 import { authApi, endpoints } from "../../config/apiConfig";
 import { useContext } from "react";
 import { MyUserContext } from "../../App";
-import { useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import iconLoading from "../../assets/images/Loading_icon.gif";
 import ItemPost from "./ItemPost";
+import { Card, Col, Pagination, Placeholder } from "react-bootstrap";
+
+import { useEffect, useState } from "react";
+
+import apiConfig from "../../config/apiConfig";
+import { useSearchParams } from "react-router-dom";
 
 function ListPost(props) {
+  const [loading, setLoading] = useState(true);
+  const [q] = useSearchParams();
+  const [posts, setPosts] = useState([]);
+  const [pages, setPages] = useState(0);
   const [user, dispatch] = useContext(MyUserContext);
   const navigate = useNavigate();
-  const [showLikesModal, setShowLikesModal] = useState(false);
+
+  useEffect(() => {
+    const renderListPost = () => {
+      try {
+        let e = endpoints["posts"];
+        let page = q.get("page");
+
+        if (page !== null && page !== "") {
+          e = `${e}?page=${page}`;
+        } else {
+          let kw = q.get("kw");
+          if (kw !== null && kw !== "") e = `${e}?kw=${kw}`;
+        }
+
+        apiConfig.get(`${e}`).then((response) => {
+          setLoading(false);
+          const reversedPosts = response.data.reverse();
+          setPosts(reversedPosts);
+        });
+      } catch (ex) {
+        console.log(ex);
+      }
+    };
+    const renderPageSize = () => {
+      apiConfig.get(endpoints["get-count-pages"]).then((response) => {
+        const pagesReponse = response.data;
+        setPages(pagesReponse);
+      });
+    };
+    renderPageSize();
+    renderListPost();
+  }, [props.onCount, q]);
+
   const xuLyThichBaiViet = async (id) => {
     if (!user) {
       navigate("/login");
@@ -32,62 +73,54 @@ function ListPost(props) {
       }
     }
   };
-  const openLikesModal = () => {
-    setShowLikesModal(true);
-  };
 
-  const closeLikesModal = () => {
-    setShowLikesModal(false);
-  };
+  let items = [];
+  for (let number = 0; number <= pages; number++) {
+    let h = `/?page=${number}`;
+    items.push(
+      <Link
+        key={number}
+        className={`item-pagination ${
+          number === parseInt(q.get("page")) ? "active" : ""
+        }`}
+        to={h}>
+        {number === 0 ? "Tất cả" : number}
+      </Link>
+    );
+  }
 
-  useEffect(() => {
-    if (user) {
-      // Check if the user is authenticated
-      const fetchLikes = async (id) => {
-        try {
-          const response = await authApi().get(
-            `${endpoints["get-like-post"]}${id}/`
-          );
-          // Update the like status for the specific post
-          setPostLikeStatus(id, response.data);
-        } catch (error) {
-          console.error("An error occurred while fetching likes:", error);
-        }
-      };
-
-      props.posts.forEach((post) => {
-        fetchLikes(post.id);
-      });
-    }
-  }, [props.posts, user]);
-
-  // A state to store like status for each post
-  const [postLikes, setPostLikes] = useState({});
-
-  // Function to update the like status for a specific post
-  const setPostLikeStatus = (postId, status) => {
-    setPostLikes((prevLikes) => ({
-      ...prevLikes,
-      [postId]: status,
-    }));
-  };
-
-  
+  if (loading === true) {
+    return (
+      <Row xs={1} className="g-4">
+        <Col>
+          <Card>
+            <Card.Img alt="" src={iconLoading} />
+            <Card.Body>
+              <Placeholder as={Card.Title} animation="glow">
+                <Placeholder xs={6} />
+              </Placeholder>
+              <Placeholder as={Card.Text} animation="glow">
+                <Placeholder xs={7} /> <Placeholder xs={4} />{" "}
+                <Placeholder xs={4} /> <Placeholder xs={6} />{" "}
+                <Placeholder xs={8} />
+              </Placeholder>
+              <Placeholder.Button variant="primary" xs={6} />
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+    );
+  }
 
   return (
     <Row xs={1} className="g-4">
-      {props.posts.map((post, idx) => {
-        const isLiked =postLikes[post.id] || false;
+      <Col>
+        <Pagination>{items}</Pagination>
+      </Col>
+
+      {posts.map((post, idx) => {
         return (
-          <ItemPost
-            key={idx}
-            post={post}
-            isLiked={isLiked}
-            xuLyThichBaiViet={xuLyThichBaiViet}
-            openLikesModal={openLikesModal}
-            showLikesModal={showLikesModal}
-            closeLikesModal={closeLikesModal}
-          />
+          <ItemPost onPostUpdate={props.onPostCreated}  key={idx} post={post} xuLyThichBaiViet={xuLyThichBaiViet} />
         );
       })}
     </Row>

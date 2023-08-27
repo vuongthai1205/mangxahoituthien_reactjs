@@ -55,6 +55,7 @@ function Register() {
           // Handle successful uploads on complete
           // For instance, get the download URL: https://firebasestorage.googleapis.com/...
           getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+            setLoading(false);
             setFormData((prevData) => ({
               ...prevData,
               avatar: downloadURL,
@@ -104,18 +105,6 @@ function Register() {
       [name]: value,
     }));
   };
-
-  useEffect(() => {
-    function simulateNetworkRequest() {
-      return new Promise((resolve) => setTimeout(resolve, 2000));
-    }
-
-    if (isLoading) {
-      simulateNetworkRequest().then(() => {
-        setLoading(false);
-      });
-    }
-  }, [isLoading]);
 
   return (
     <div className="container mt-4">

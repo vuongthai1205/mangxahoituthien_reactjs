@@ -1,34 +1,107 @@
+import { useContext, useEffect, useState } from "react";
+import { Button, Card, Col, Row } from "react-bootstrap";
+import { MyUserContext } from "../../App";
+import CreateAndUpdatePost from "./CreateAndUpdatePost";
+import apiConfig, { endpoints } from "../../config/apiConfig";
+import DeletePost from "./DeletePost";
 
-import { useEffect } from "react";
-import { useState } from "react";
-import { Button, Modal } from "react-bootstrap";
-import Card from "react-bootstrap/Card";
-import Col from "react-bootstrap/Col";
-import Row from "react-bootstrap/Row";
-function ItemPost({
-  post,
-  isLiked,
-  xuLyThichBaiViet,
-  openLikesModal,
-  showLikesModal,
-  closeLikesModal,
-}) {
-  const [like, setLike] = useState(isLiked);
+function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
+  const [user, dispatch] = useContext(MyUserContext);
+  const [like, setLike] = useState(false);
+  const [action, setAction] = useState(false);
 
   useEffect(() => {
-    // Update the state when the prop changes
-    setLike(isLiked);
-  }, [isLiked]);
+    const handleLike = () => {
+      if (
+        user !== null &&
+        post.likePost.map((element) => element.username).includes(user.username)
+      ) {
+        setLike(true);
+      } else {
+        setLike(false);
+      }
+    };
+
+    const handleShowAction = () => {
+      if (user !== null && post.user.username === user.username) {
+        setAction(true);
+      } else {
+        setAction(false);
+      }
+    };
+
+    handleShowAction();
+    handleLike();
+  }, [user, post]);
 
   const handleLikeClick = () => {
     setLike((prevLike) => !prevLike);
-    // Toggle the like status for the post
-    xuLyThichBaiViet(post.id);// Toggle the state using the previous state
-    
+    xuLyThichBaiViet(post.id);
   };
+
+  const [show, setShow] = useState(false);
+  const [postItem, setPostItem] = useState({});
+  const handleClose = () => setShow(false);
+
+  const handleShow = async (id) => {
+    try {
+      const response = await apiConfig.get(`${endpoints["posts"]}${id}/`);
+      const data = response.data;
+      setPostItem(data);
+      if (response.status === 200) {
+        console.log("getPostById oke");
+      } else {
+        console.log("error");
+      }
+    } catch (ex) {
+      console.log(ex);
+    }
+    setShow(true);
+  };
+
+  const [showDelete, setShowDelete] = useState(false);
+  const handleCloseDelete = () => {
+    setShowDelete(false);
+  };
+
+  const handleShowDelete = () => {
+    setShowDelete(true);
+  };
+
   return (
     <Col>
       <Card>
+        {action ? (
+          <div className="action_post">
+            <Button
+              variant="success"
+              onClick={() => {
+                handleShow(post.id);
+              }}>
+              Sửa
+            </Button>
+            <CreateAndUpdatePost
+              onPostUpdate={onPostUpdate}
+              post={postItem}
+              showPopup={show}
+              closePopup={handleClose}
+            />
+
+            <Button variant="danger" onClick={handleShowDelete}>
+              Xóa
+            </Button>
+
+            <DeletePost
+              onPostUpdate={onPostUpdate}
+              post={post.id}
+              showPopup={showDelete}
+              closePopup={handleCloseDelete}
+            />
+          </div>
+        ) : (
+          <></>
+        )}
+
         <Card.Img variant="top" src={post.image} />
         <Card.Body>
           <Card.Title>{post.title}</Card.Title>
@@ -41,18 +114,12 @@ function ItemPost({
                 variant={like ? "success" : "info"}>
                 {like ? "Đã Thích" : "Thích"}
               </Button>
-              <Button className="mt-3" variant="info" onClick={openLikesModal}>
+              <Button className="mt-3" variant="info">
                 Danh sách người đã thích bài viết
               </Button>
-              <Modal show={showLikesModal} onHide={closeLikesModal}>
-                <Modal.Header closeButton>
-                  <Modal.Title>Danh sách người đã thích bài viết</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                  {/* Display the list of users who liked the post here */}
-                  {/* You can map through the list and render user information */}
-                </Modal.Body>
-              </Modal>
+              {post.likePost.map((item, id) => (
+                <h1 key={id}>{item.username}</h1>
+              ))}
             </Col>
             <Col>
               <Button variant="secondary">Bình luận</Button>
