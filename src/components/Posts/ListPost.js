@@ -7,9 +7,50 @@ import iconLoading from "../../assets/images/Loading_icon.gif";
 import ItemPost from "./ItemPost";
 import { Card, Col, Pagination, Placeholder } from "react-bootstrap";
 
+import { useEffect, useState } from "react";
+
+import apiConfig from "../../config/apiConfig";
+import { useSearchParams } from "react-router-dom";
+
 function ListPost(props) {
+  const [loading, setLoading] = useState(true);
+  const [q] = useSearchParams();
+  const [posts, setPosts] = useState([]);
+  const [pages, setPages] = useState(0);
   const [user, dispatch] = useContext(MyUserContext);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const renderListPost = () => {
+      try {
+        let e = endpoints["posts"];
+        let page = q.get("page");
+
+        if (page !== null && page !== "") {
+          e = `${e}?page=${page}`;
+        } else {
+          let kw = q.get("kw");
+          if (kw !== null && kw !== "") e = `${e}?kw=${kw}`;
+        }
+
+        apiConfig.get(`${e}`).then((response) => {
+          setLoading(false);
+          const reversedPosts = response.data.reverse();
+          setPosts(reversedPosts);
+        });
+      } catch (ex) {
+        console.log(ex);
+      }
+    };
+    const renderPageSize = () => {
+      apiConfig.get(endpoints["get-count-pages"]).then((response) => {
+        const pagesReponse = response.data;
+        setPages(pagesReponse);
+      });
+    };
+    renderPageSize();
+    renderListPost();
+  }, [props.onCount, q]);
 
   const xuLyThichBaiViet = async (id) => {
     if (!user) {
@@ -34,13 +75,13 @@ function ListPost(props) {
   };
 
   let items = [];
-  for (let number = 0; number <= props.pages; number++) {
+  for (let number = 0; number <= pages; number++) {
     let h = `/?page=${number}`;
     items.push(
       <Link
         key={number}
         className={`item-pagination ${
-          number === parseInt(props.numberPage) ? "active" : ""
+          number === parseInt(q.get("page")) ? "active" : ""
         }`}
         to={h}>
         {number === 0 ? "Tất cả" : number}
@@ -48,10 +89,9 @@ function ListPost(props) {
     );
   }
 
-  if (props.loading === true){
+  if (loading === true) {
     return (
       <Row xs={1} className="g-4">
-        
         <Col>
           <Card>
             <Card.Img alt="" src={iconLoading} />
@@ -78,15 +118,13 @@ function ListPost(props) {
         <Pagination>{items}</Pagination>
       </Col>
 
-      {props.posts.map((post, idx) => {
+      {posts.map((post, idx) => {
         return (
-          <ItemPost key={idx} post={post} xuLyThichBaiViet={xuLyThichBaiViet} />
+          <ItemPost onPostUpdate={props.onPostCreated}  key={idx} post={post} xuLyThichBaiViet={xuLyThichBaiViet} />
         );
       })}
     </Row>
   );
-
-  
 }
 
 export default ListPost;
