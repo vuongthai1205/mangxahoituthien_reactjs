@@ -14,29 +14,40 @@ import { useContext } from "react";
 import { MyUserContext } from "../../App";
 import { useEffect } from "react";
 
-function CreateAndUpdatePost({ onPostCreated, showPopup, closePopup, post, onPostUpdate }) {
+function CreateAndUpdatePost({
+  onPostCreated,
+  showPopup,
+  closePopup,
+  post,
+  onPostUpdate,
+}) {
   const [user, dispatch] = useContext(MyUserContext);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [checkAuction, setCheckAuction] = useState(false);
+
+  const auctionStatus = checkAuction ? 1 : 2;
   const [formData, setFormData] = useState({
     title: "",
     content: "",
     image: "",
+    startPrice: "",
+    auctionStatus: auctionStatus ,
   });
 
   useEffect(() => {
-    if (post) {
+    if (post !== undefined) {
       setFormData({
         title: post.title,
         content: post.content,
         image: post.image,
+        startPrice: post.startPrice,
+        auctionStatus: auctionStatus ,
       });
     } else {
-      setFormData({
-        title: "",
-        content: "",
-        image: "",
-      });
+      setFormData((prevData) => ({
+        ...prevData,
+      }));
     }
   }, [post]);
 
@@ -115,7 +126,7 @@ function CreateAndUpdatePost({ onPostCreated, showPopup, closePopup, post, onPos
       return;
     }
 
-    if (post) {
+    if (post !== undefined) {
       try {
         const response = await authApi().put(
           `${endpoints["posts"]}${post.id}/`,
@@ -123,11 +134,12 @@ function CreateAndUpdatePost({ onPostCreated, showPopup, closePopup, post, onPos
         );
         if (response.status === 200) {
           onPostUpdate();
-          closePopup()
+          closePopup();
           setFormData({
             title: "",
             content: "",
             image: "",
+            startPrice: "",
           });
           console.log("Post updated successfully");
         } else if (response.status === 500) {
@@ -144,7 +156,7 @@ function CreateAndUpdatePost({ onPostCreated, showPopup, closePopup, post, onPos
 
         if (response.status === 201) {
           onPostCreated();
-          closePopup()
+          closePopup();
           setFormData({
             title: "",
             content: "",
@@ -158,6 +170,16 @@ function CreateAndUpdatePost({ onPostCreated, showPopup, closePopup, post, onPos
         // Xử lý lỗi từ Axios
       }
     }
+  };
+
+  const handleCheckAuctionChange = () => {
+    setCheckAuction((prevCheck) => !prevCheck);
+    
+    setFormData((prevData) => ({
+      ...prevData,
+      startPrice: checkAuction ? 0 : formData.startPrice,
+      auctionStatus: auctionStatus,
+    }));
   };
 
   const handleInputChange = (e) => {
@@ -208,6 +230,7 @@ function CreateAndUpdatePost({ onPostCreated, showPopup, closePopup, post, onPos
                     onChange={handleInputChange}
                   />
                 </Form.Group>
+
                 <Form.Group
                   className="mb-3"
                   controlId="exampleForm.ControlTextarea1">
@@ -215,6 +238,32 @@ function CreateAndUpdatePost({ onPostCreated, showPopup, closePopup, post, onPos
                   <Form.Control onChange={handleImageChange} type="file" />
                   <Image height={200} src={formData.image} />
                 </Form.Group>
+                <Form.Group>
+                  <Form.Check // prettier-ignore
+                    type="switch"
+                    className="mb-3"
+                    label="Có đấu giá"
+                    checked={checkAuction}
+                    onChange={handleCheckAuctionChange}
+                  />
+                </Form.Group>
+                {checkAuction ? (
+                  <>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Giá khởi điểm</Form.Label>
+                      <Form.Control
+                        value={formData.startPrice || ""}
+                        onChange={handleInputChange}
+                        type="text"
+                        name="startPrice"
+                        placeholder="Nhập giá khởi điểm"
+                      />
+                    </Form.Group>
+                  </>
+                ) : (
+                  <></>
+                )}
+
                 <Button type="submit" disabled={loading}>
                   {loading === true ? "Đang tải" : "Đăng"}
                 </Button>

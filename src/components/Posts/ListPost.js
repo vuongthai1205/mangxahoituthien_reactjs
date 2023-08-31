@@ -26,7 +26,10 @@ function ListPost(props) {
         let e = endpoints["posts"];
         let page = q.get("page");
 
-        if (page !== null && page !== "") {
+        if (page === null) {
+          e = `${e}?page=1`;
+        }
+        else if(page !== null && page !== "") {
           e = `${e}?page=${page}`;
         } else {
           let kw = q.get("kw");
@@ -35,8 +38,7 @@ function ListPost(props) {
 
         apiConfig.get(`${e}`).then((response) => {
           setLoading(false);
-          const reversedPosts = response.data.reverse();
-          setPosts(reversedPosts);
+          setPosts(response.data);
         });
       } catch (ex) {
         console.log(ex);
@@ -74,8 +76,9 @@ function ListPost(props) {
     }
   };
 
+
   let items = [];
-  for (let number = 0; number <= pages; number++) {
+  for (let number = 1; number <= pages; number++) {
     let h = `/?page=${number}`;
     items.push(
       <Link
@@ -84,7 +87,7 @@ function ListPost(props) {
           number === parseInt(q.get("page")) ? "active" : ""
         }`}
         to={h}>
-        {number === 0 ? "Tất cả" : number}
+        {number}
       </Link>
     );
   }
@@ -114,15 +117,16 @@ function ListPost(props) {
 
   return (
     <Row xs={1} className="g-4">
-      <Col>
-        <Pagination>{items}</Pagination>
-      </Col>
+      
 
       {posts.map((post, idx) => {
         return (
           <ItemPost onPostUpdate={props.onPostCreated}  key={idx} post={post} xuLyThichBaiViet={xuLyThichBaiViet} />
         );
       })}
+      <Col>
+        <Pagination>{items}</Pagination>
+      </Col>
     </Row>
   );
 }

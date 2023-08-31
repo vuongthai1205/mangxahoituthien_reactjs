@@ -1,15 +1,21 @@
 import { useContext, useEffect, useState } from "react";
-import { Button, Card, Col, Row } from "react-bootstrap";
+import { Button, Card, Col, Form, Row } from "react-bootstrap";
 import { MyUserContext } from "../../App";
 import CreateAndUpdatePost from "./CreateAndUpdatePost";
-import apiConfig, { endpoints } from "../../config/apiConfig";
+import apiConfig, { authApi, endpoints } from "../../config/apiConfig";
 import DeletePost from "./DeletePost";
+import { Link } from "react-router-dom";
+import ListAuction from "../Auctions/ListAuction";
 
 function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
   const [user, dispatch] = useContext(MyUserContext);
   const [like, setLike] = useState(false);
   const [action, setAction] = useState(false);
-
+  const [listAuction, setListAuction] = useState([])
+  const [formPrice, setFormPrice] = useState({
+    idPost: post.id,
+    price: "",
+  });
   useEffect(() => {
     const handleLike = () => {
       if (
@@ -68,6 +74,50 @@ function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
     setShowDelete(true);
   };
 
+  const [showAuction, setShowAuction] = useState(false);
+  const handleCloseAuction = () => {
+    setShowAuction(false);
+  };
+
+  const handleShowAuction = async (id) => {
+    try{
+      const response = await authApi().get(`${endpoints["auction"]}${id}/`)
+      setListAuction(response.data)
+    }
+    catch(ex){
+      console.log(ex)
+    }
+    
+    setShowAuction(true);
+  };
+
+  const handleSubmitStartPrice = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await authApi().post(endpoints["auction"], formPrice);
+
+      if (response.status === 201) {
+        console.log("oke");
+      } else {
+        console.log("khong thanh cong");
+      }
+    } catch (ex) {
+      if (ex.response.status === 409) {
+        console.log("xung dot");
+      } else {
+        console.log("khong thanh cong");
+      }
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormPrice((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
   return (
     <Col>
       <Card>
@@ -97,6 +147,15 @@ function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
               showPopup={showDelete}
               closePopup={handleCloseDelete}
             />
+
+            <Button variant="info" onClick={() => {
+              handleShowAuction(post.id)
+            }}>
+              Danh sách người đã đấu giá
+            </Button>
+
+            <ListAuction listAuction={listAuction} showPopup={showAuction}
+              closePopup={handleCloseAuction} />
           </div>
         ) : (
           <></>
@@ -104,8 +163,33 @@ function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
 
         <Card.Img variant="top" src={post.image} />
         <Card.Body>
-          <Card.Title>{post.title}</Card.Title>
+          <Card.Title>
+            <Link to={`/post/${post.id}`}>{post.title}</Link>
+          </Card.Title>
           <Card.Text>{post.content}</Card.Text>
+          {user != null && post.auctionStatus.id == 2 ? (
+            <>
+              <Card.Text>Giá Khởi điểm: {post.startPrice}</Card.Text>
+              <Form onSubmit={handleSubmitStartPrice} className="my-3">
+                <Form.Group>
+                  <Form.Control
+                    pattern="[0-9]*"
+                    type="text"
+                    value={formPrice.price}
+                    name="price"
+                    onChange={handleInputChange}
+                    placeholder="Nhập giá bạn muốn đấu giá (Vui lòng lớn hơn giá khởi điểm)"
+                  />
+                </Form.Group>
+                <Button className="mt-2" type="submit">
+                  Gửi
+                </Button>
+              </Form>
+            </>
+          ) : (
+            <></>
+          )}
+
           <Row lg={3}>
             <Col>
               <Button
@@ -113,9 +197,6 @@ function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
                 className="mr-3"
                 variant={like ? "success" : "info"}>
                 {like ? "Đã Thích" : "Thích"}
-              </Button>
-              <Button className="mt-3" variant="info">
-                Danh sách người đã thích bài viết
               </Button>
               {post.likePost.map((item, id) => (
                 <h1 key={id}>{item.username}</h1>

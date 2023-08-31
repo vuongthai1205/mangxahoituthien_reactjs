@@ -11,6 +11,7 @@ export const endpoints = {
     "current-user": `${SERVER_CONTEXT}/api/current-user/`,
     "like-post": `${SERVER_CONTEXT}/api/post/like/`,
     "get-count-pages": `${SERVER_CONTEXT}/api/post/count-pages/`,
+    "auction": `${SERVER_CONTEXT}/api/auction/`,
 }
 
 export const authApi = () => {
