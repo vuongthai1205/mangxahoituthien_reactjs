@@ -26,15 +26,14 @@ function CreateAndUpdatePost({
   const navigate = useNavigate();
   const [checkAuction, setCheckAuction] = useState(false);
 
-  const auctionStatus = checkAuction ? 1 : 2;
+  let auctionStatus = checkAuction ? 1 : 2;
   const [formData, setFormData] = useState({
     title: "",
     content: "",
     image: "",
     startPrice: "",
     auctionStatus: auctionStatus ,
-  });
-
+  }); 
   useEffect(() => {
     if (post !== undefined) {
       setFormData({
@@ -42,7 +41,7 @@ function CreateAndUpdatePost({
         content: post.content,
         image: post.image,
         startPrice: post.startPrice,
-        auctionStatus: auctionStatus ,
+        auctionStatus: auctionStatus,
       });
     } else {
       setFormData((prevData) => ({

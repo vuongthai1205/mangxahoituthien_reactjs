@@ -11,11 +11,12 @@ function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
   const [user, dispatch] = useContext(MyUserContext);
   const [like, setLike] = useState(false);
   const [action, setAction] = useState(false);
-  const [listAuction, setListAuction] = useState([])
+  const [listAuction, setListAuction] = useState([]);
   const [formPrice, setFormPrice] = useState({
     idPost: post.id,
     price: "",
   });
+  const [auctioned, setAuctioned] = useState(false);
   useEffect(() => {
     const handleLike = () => {
       if (
@@ -36,9 +37,21 @@ function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
       }
     };
 
+    const handleAuctioned = () => {
+      if (
+        user !== null &&
+        listAuction.map((element) => element.username).includes(user.username)
+      ) {
+        setAuctioned(true);
+      } else {
+        setAuctioned(false);
+      }
+    };
+
     handleShowAction();
     handleLike();
-  }, [user, post]);
+    handleAuctioned();
+  }, [user, post, listAuction]);
 
   const handleLikeClick = () => {
     setLike((prevLike) => !prevLike);
@@ -80,14 +93,13 @@ function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
   };
 
   const handleShowAuction = async (id) => {
-    try{
-      const response = await authApi().get(`${endpoints["auction"]}${id}/`)
-      setListAuction(response.data)
+    try {
+      const response = await authApi().get(`${endpoints["auction"]}${id}/`);
+      setListAuction(response.data);
+    } catch (ex) {
+      console.log(ex);
     }
-    catch(ex){
-      console.log(ex)
-    }
-    
+
     setShowAuction(true);
   };
 
@@ -97,15 +109,19 @@ function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
       const response = await authApi().post(endpoints["auction"], formPrice);
 
       if (response.status === 201) {
-        console.log("oke");
+        alert("Đấu giá thành công");
       } else {
-        console.log("khong thanh cong");
+        alert("Không thành công");
       }
     } catch (ex) {
       if (ex.response.status === 409) {
-        console.log("xung dot");
+        alert("Bạn đã đấu giá rồi, Vui lòng đợi thông tin của chủ bài viết");
+      } else if (ex.response.status === 400) {
+        alert("Vui lòng cho giá cao hơn giá khởi điểm");
+      } else if (ex.response.status === 500) {
+        alert("Lỗi máy chủ");
       } else {
-        console.log("khong thanh cong");
+        alert("Không thành công");
       }
     }
   };
@@ -147,15 +163,23 @@ function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
               showPopup={showDelete}
               closePopup={handleCloseDelete}
             />
+            {user !== null && post.auctionStatus.id === 2 || user !== null && post.auctionStatus.id === 3 ? (
+              <Button
+                variant="info"
+                onClick={() => {
+                  handleShowAuction(post.id);
+                }}>
+                Danh sách người đã đấu giá
+              </Button>
+            ) : (
+              <></>
+            )}
 
-            <Button variant="info" onClick={() => {
-              handleShowAuction(post.id)
-            }}>
-              Danh sách người đã đấu giá
-            </Button>
-
-            <ListAuction listAuction={listAuction} showPopup={showAuction}
-              closePopup={handleCloseAuction} />
+            <ListAuction
+              listAuction={listAuction}
+              showPopup={showAuction}
+              closePopup={handleCloseAuction}
+            />
           </div>
         ) : (
           <></>
@@ -167,28 +191,33 @@ function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
             <Link to={`/post/${post.id}`}>{post.title}</Link>
           </Card.Title>
           <Card.Text>{post.content}</Card.Text>
-          {user != null && post.auctionStatus.id == 2 ? (
-            <>
-              <Card.Text>Giá Khởi điểm: {post.startPrice}</Card.Text>
-              <Form onSubmit={handleSubmitStartPrice} className="my-3">
-                <Form.Group>
-                  <Form.Control
-                    pattern="[0-9]*"
-                    type="text"
-                    value={formPrice.price}
-                    name="price"
-                    onChange={handleInputChange}
-                    placeholder="Nhập giá bạn muốn đấu giá (Vui lòng lớn hơn giá khởi điểm)"
-                  />
-                </Form.Group>
-                <Button className="mt-2" type="submit">
-                  Gửi
-                </Button>
-              </Form>
-            </>
+          {user !== null && post.auctionStatus.id === 2 ? (
+            auctioned === false ? (
+              <>
+                <Card.Text>Giá Khởi điểm: {post.startPrice}</Card.Text>
+                <Form onSubmit={handleSubmitStartPrice} className="my-3">
+                  <Form.Group>
+                    <Form.Control
+                      pattern="[0-9]*"
+                      type="text"
+                      value={formPrice.price}
+                      name="price"
+                      onChange={handleInputChange}
+                      placeholder="Nhập giá bạn muốn đấu giá (Vui lòng lớn hơn giá khởi điểm)"
+                    />
+                  </Form.Group>
+                  <Button className="mt-2" type="submit">
+                    Gửi
+                  </Button>
+                </Form>
+              </>
+            ) : (
+              <h4>Bạn đã đấu giá bài viết</h4>
+            )
           ) : (
             <></>
           )}
+          {user !== null && post.auctionStatus.id === 3 ? <h5>Đã kết thúc đấu giá</h5> : <></>}
 
           <Row lg={3}>
             <Col>
@@ -199,7 +228,7 @@ function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
                 {like ? "Đã Thích" : "Thích"}
               </Button>
               {post.likePost.map((item, id) => (
-                <h1 key={id}>{item.username}</h1>
+                <h5 key={id}>{item.username}</h5>
               ))}
             </Col>
             <Col>

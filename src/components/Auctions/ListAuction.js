@@ -1,4 +1,5 @@
 import { Button, Modal } from "react-bootstrap";
+import ItemAuction from "./ItemAuction";
 
 function ListAuction({ listAuction, showPopup, closePopup }) {
   return (
@@ -9,7 +10,15 @@ function ListAuction({ listAuction, showPopup, closePopup }) {
         </Modal.Header>
         <Modal.Body>
           {listAuction.map((element, id) => {
-            return <h6 key={id}>{element.username} : {element.price}</h6>;
+            return (
+              <ItemAuction
+                key={id}
+                id={element.id}
+                winner={element.winnerAuctioned}
+                username={element.username}
+                price={element.price}
+              />
+            );
           })}
         </Modal.Body>
         <Modal.Footer>
