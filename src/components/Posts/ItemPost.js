@@ -17,6 +17,11 @@ function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
     price: "",
   });
   const [auctioned, setAuctioned] = useState(false);
+  const [formComment, setFormComment] = useState({
+    content: "",
+  });
+  const [isEditing, setIsEditing] = useState(false);
+
   useEffect(() => {
     const handleLike = () => {
       if (
@@ -134,6 +139,47 @@ function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
     }));
   };
 
+  const handleContentChange = (e) => {
+    const { name, value } = e.target;
+    setFormComment((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
+  const handlSubmitComment = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await authApi().post(
+        `${endpoints["comment"]}${post.id}/`,
+        formComment
+      );
+      if (response.status === 201) {
+        onPostUpdate();
+      } else {
+        console.log("lỗi rồi ");
+      }
+    } catch (ex) {
+      alert(ex);
+    }
+    // Đây bạn có thể sử dụng giá trị của 'content' cho mục đích của bạn
+
+    // Nếu bạn muốn làm gì đó khác với giá trị này, bạn có thể thực hiện ở đây
+  };
+
+  const handleDeleteComment = async (id) => {
+    try {
+      const response = await authApi().delete(`${endpoints["comment"]}${id}/`);
+      if (response.status === 200) {
+        onPostUpdate();
+      } else {
+        console.log("lỗi rồi ");
+      }
+    } catch (ex) {
+      alert(ex);
+    }
+  };
+
   return (
     <Col>
       <Card>
@@ -143,15 +189,19 @@ function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
               variant="success"
               onClick={() => {
                 handleShow(post.id);
+                setIsEditing(true); // Set isEditing to true when the button is clicked
               }}>
               Sửa
             </Button>
-            <CreateAndUpdatePost
-              onPostUpdate={onPostUpdate}
-              post={postItem}
-              showPopup={show}
-              closePopup={handleClose}
-            />
+
+            {isEditing && (
+              <CreateAndUpdatePost
+                onPostUpdate={onPostUpdate}
+                post={postItem}
+                showPopup={show}
+                closePopup={handleClose}
+              />
+            )}
 
             <Button variant="danger" onClick={handleShowDelete}>
               Xóa
@@ -163,7 +213,8 @@ function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
               showPopup={showDelete}
               closePopup={handleCloseDelete}
             />
-            {user !== null && post.auctionStatus.id === 2 || user !== null && post.auctionStatus.id === 3 ? (
+            {(user !== null && post.auctionStatus.id === 2) ||
+            (user !== null && post.auctionStatus.id === 3) ? (
               <Button
                 variant="info"
                 onClick={() => {
@@ -194,6 +245,8 @@ function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
           {user !== null && post.auctionStatus.id === 2 ? (
             auctioned === false ? (
               <>
+                <Card.Text>Ngày bắt đầu đấu giá: {post.startAuctionTime}</Card.Text>
+                <Card.Text>Ngày kết thúc đấu giá: {post.endAuctionTime}</Card.Text>
                 <Card.Text>Giá Khởi điểm: {post.startPrice}</Card.Text>
                 <Form onSubmit={handleSubmitStartPrice} className="my-3">
                   <Form.Group>
@@ -217,7 +270,11 @@ function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
           ) : (
             <></>
           )}
-          {user !== null && post.auctionStatus.id === 3 ? <h5>Đã kết thúc đấu giá</h5> : <></>}
+          {user !== null && post.auctionStatus.id === 3 ? (
+            <h5>Đã kết thúc đấu giá</h5>
+          ) : (
+            <></>
+          )}
 
           <Row lg={3}>
             <Col>
@@ -232,10 +289,63 @@ function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
               ))}
             </Col>
             <Col>
-              <Button variant="secondary">Bình luận</Button>
+              <Form onSubmit={handlSubmitComment}>
+                <Form.Control
+                  className="mb-2"
+                  type="text"
+                  name="content"
+                  value={formComment.content}
+                  onChange={handleContentChange}></Form.Control>
+                <Button type="submit" variant="secondary">
+                  Bình luận
+                </Button>
+              </Form>
             </Col>
             <Col>
               <Button variant="success">Chia sẻ</Button>
+            </Col>
+          </Row>
+          <Row>
+            <Col>
+              <ul className="comment-list">
+                {post.listComment.map((item, id) => {
+                  return (
+                    <li key={id} className="comment-item">
+                      <img
+                        width={100}
+                        src={item.image}
+                        className="comment-avt"
+                        alt=""
+                      />
+                      <div>
+                        <Link to={`/profile?iduser=${item.idUser}`}>
+                          <h3 className="comment-user-name">{item.username}</h3>
+                        </Link>
+
+                        <h4 className="comment-content">{item.content}</h4>
+                      </div>
+                      {user !== null && user.username === item.username ? (
+                        <Button
+                          onClick={() => {
+                            if (
+                              window.confirm(
+                                "Bạn có chắc muốn xóa bình luận này ?"
+                              )
+                            ) {
+                              handleDeleteComment(item.id);
+                            }
+                          }}
+                          className="btn-delete-cmt"
+                          variant="danger">
+                          Xóa
+                        </Button>
+                      ) : (
+                        <></>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
             </Col>
           </Row>
         </Card.Body>

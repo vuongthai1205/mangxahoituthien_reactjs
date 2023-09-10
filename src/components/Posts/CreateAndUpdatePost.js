@@ -21,36 +21,39 @@ function CreateAndUpdatePost({
   post,
   onPostUpdate,
 }) {
+  const [error, setError] = useState("");
   const [user, dispatch] = useContext(MyUserContext);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [checkAuction, setCheckAuction] = useState(false);
 
-  let auctionStatus = checkAuction ? 1 : 2;
   const [formData, setFormData] = useState({
     title: "",
     content: "",
     image: "",
     startPrice: "",
-    auctionStatus: auctionStatus ,
+    auctionStatus: checkAuction === true ? 2 : 1 ,
+    auctionStartTime: "",
+    auctionEndTime: ""
   }); 
   useEffect(() => {
     if (post !== undefined) {
-      setFormData({
+      setFormData((prevData) => ( {
+        ...prevData,
         title: post.title,
         content: post.content,
         image: post.image,
-        startPrice: post.startPrice,
-        auctionStatus: auctionStatus,
-      });
+        startPrice: checkAuction ?  post.startPrice : 0,
+        auctionStatus: checkAuction ? 2 : 1,
+      }));
     } else {
       setFormData((prevData) => ({
         ...prevData,
+        auctionStatus: checkAuction ? 2 : 1,
       }));
     }
-  }, [post]);
-
-  const [error, setError] = useState("");
+  }, [post, checkAuction]);
+  
 
   const isFormDataValid = (data) => {
     if (
@@ -160,6 +163,7 @@ function CreateAndUpdatePost({
             title: "",
             content: "",
             image: "",
+            startPrice: "",
           });
           setError("");
         } else {
@@ -176,10 +180,13 @@ function CreateAndUpdatePost({
     
     setFormData((prevData) => ({
       ...prevData,
-      startPrice: checkAuction ? 0 : formData.startPrice,
-      auctionStatus: auctionStatus,
+      startPrice: checkAuction ?  0 : formData.startPrice,
+      auctionStatus: checkAuction === true ? 2 : 1,
     }));
   };
+
+  console.log(checkAuction)
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -214,6 +221,7 @@ function CreateAndUpdatePost({
                     type="text"
                     placeholder="Nhập tiêu đề..."
                     onChange={handleInputChange}
+                    required
                   />
                 </Form.Group>
                 <Form.Group
@@ -227,6 +235,7 @@ function CreateAndUpdatePost({
                     rows={3}
                     placeholder="Nhập nội dung..."
                     onChange={handleInputChange}
+                    required
                   />
                 </Form.Group>
 
@@ -234,7 +243,7 @@ function CreateAndUpdatePost({
                   className="mb-3"
                   controlId="exampleForm.ControlTextarea1">
                   <Form.Label>Hình ảnh</Form.Label>
-                  <Form.Control onChange={handleImageChange} type="file" />
+                  <Form.Control required onChange={handleImageChange} type="file" />
                   <Image height={200} src={formData.image} />
                 </Form.Group>
                 <Form.Group>
@@ -246,7 +255,7 @@ function CreateAndUpdatePost({
                     onChange={handleCheckAuctionChange}
                   />
                 </Form.Group>
-                {checkAuction ? (
+                {checkAuction === true ? (
                   <>
                     <Form.Group className="mb-3">
                       <Form.Label>Giá khởi điểm</Form.Label>
@@ -256,6 +265,20 @@ function CreateAndUpdatePost({
                         type="text"
                         name="startPrice"
                         placeholder="Nhập giá khởi điểm"
+                      />
+                      <Form.Label>Thời gian bắt đầu</Form.Label>
+                      <Form.Control 
+                        name="auctionStartTime"
+                        value={formData.auctionStartTime || ""}
+                        onChange={handleInputChange}
+                        type="date"
+                      />
+                      <Form.Label>Thời gian kết thúc</Form.Label>
+                      <Form.Control 
+                        name="auctionEndTime"
+                        value={formData.auctionEndTime || ""}
+                        onChange={handleInputChange}
+                        type="date"
                       />
                     </Form.Group>
                   </>

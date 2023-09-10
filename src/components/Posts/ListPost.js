@@ -25,15 +25,16 @@ function ListPost(props) {
       try {
         let e = endpoints["posts"];
         let page = q.get("page");
-
-        if (page === null) {
-          e = `${e}?page=1`;
-        }
-        else if(page !== null && page !== "") {
+        let kw = q.get("kw");
+        let iduser= q.get("iduser")
+        if (page !== null && page !== "") {
           e = `${e}?page=${page}`;
+        } else if (kw !== null && kw !== "") {
+          e = `${e}?kw=${kw}`;
+        }else if (iduser !== null && iduser !== "") {
+          e = `${e}?iduser=${iduser}`;
         } else {
-          let kw = q.get("kw");
-          if (kw !== null && kw !== "") e = `${e}?kw=${kw}`;
+          e = `${e}?page=1`;
         }
 
         apiConfig.get(`${e}`).then((response) => {
@@ -76,10 +77,9 @@ function ListPost(props) {
     }
   };
 
-
   let items = [];
   for (let number = 1; number <= pages; number++) {
-    let h = `/?page=${number}`;
+    let h = `/post-auction/?page=${number}`;
     items.push(
       <Link
         key={number}
@@ -117,11 +117,14 @@ function ListPost(props) {
 
   return (
     <Row xs={1} className="g-4">
-      
-
       {posts.map((post, idx) => {
         return (
-          <ItemPost onPostUpdate={props.onPostCreated}  key={idx} post={post} xuLyThichBaiViet={xuLyThichBaiViet} />
+          <ItemPost
+            onPostUpdate={props.onPostCreated}
+            key={idx}
+            post={post}
+            xuLyThichBaiViet={xuLyThichBaiViet}
+          />
         );
       })}
       <Col>

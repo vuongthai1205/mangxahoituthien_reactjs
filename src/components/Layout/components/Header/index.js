@@ -25,7 +25,7 @@ function Header() {
           <Nav.Link as={Link} to="/">
             Trang chủ
           </Nav.Link>
-          <Nav.Link as={Link} to="/profile">
+          <Nav.Link as={Link} to={`/profile?iduser=${user ? user.id : null}`}>
             Trang cá nhân
           </Nav.Link>
         </Nav>

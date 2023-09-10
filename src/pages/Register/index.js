@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Form, Button } from "react-bootstrap";
 import appFirebase from "../../config/firebase";
@@ -130,6 +130,26 @@ function Register() {
             required
           />
         </Form.Group>
+        <Form.Group controlId="firstName">
+          <Form.Label>Tên</Form.Label>
+          <Form.Control
+            type="text"
+            name="firstName"
+            value={formData.firstName}
+            onChange={handleInputChange}
+            required
+          />
+        </Form.Group>
+        <Form.Group controlId="lastName">
+          <Form.Label>Họ</Form.Label>
+          <Form.Control
+            type="text"
+            name="lastName"
+            value={formData.lastName}
+            onChange={handleInputChange}
+            required
+          />
+        </Form.Group>
         <Form.Group controlId="phone">
           <Form.Label>Số điện thoại</Form.Label>
           <Form.Control
@@ -155,7 +175,7 @@ function Register() {
           <Form.Control type="file" onChange={handleImageChange} required />
         </Form.Group>
         <Form.Group controlId="avatar">
-          <Image height={200} src={formData.avatar} roundedCircle />
+          <Image height={200} src={formData.avatar} />
         </Form.Group>
 
         <Button
