@@ -13,10 +13,10 @@ function DefaultLayout({ children }) {
 
       <Container>
         <Row>
-          <Col lg="4">
+          <Col lg="3">
             <Sidebar />
           </Col>
-          <Col lg="8">
+          <Col lg="9">
             <div className="content">{children}</div>
           </Col>
         </Row>

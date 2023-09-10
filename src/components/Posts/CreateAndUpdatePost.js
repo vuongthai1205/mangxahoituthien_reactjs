@@ -14,33 +14,46 @@ import { useContext } from "react";
 import { MyUserContext } from "../../App";
 import { useEffect } from "react";
 
-function CreateAndUpdatePost({ onPostCreated, showPopup, closePopup, post, onPostUpdate }) {
+function CreateAndUpdatePost({
+  onPostCreated,
+  showPopup,
+  closePopup,
+  post,
+  onPostUpdate,
+}) {
+  const [error, setError] = useState("");
   const [user, dispatch] = useContext(MyUserContext);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [checkAuction, setCheckAuction] = useState(false);
+
   const [formData, setFormData] = useState({
     title: "",
     content: "",
     image: "",
-  });
-
+    startPrice: "",
+    auctionStatus: checkAuction === true ? 2 : 1 ,
+    auctionStartTime: "",
+    auctionEndTime: ""
+  }); 
   useEffect(() => {
-    if (post) {
-      setFormData({
+    if (post !== undefined) {
+      setFormData((prevData) => ( {
+        ...prevData,
         title: post.title,
         content: post.content,
         image: post.image,
-      });
+        startPrice: checkAuction ?  post.startPrice : 0,
+        auctionStatus: checkAuction ? 2 : 1,
+      }));
     } else {
-      setFormData({
-        title: "",
-        content: "",
-        image: "",
-      });
+      setFormData((prevData) => ({
+        ...prevData,
+        auctionStatus: checkAuction ? 2 : 1,
+      }));
     }
-  }, [post]);
-
-  const [error, setError] = useState("");
+  }, [post, checkAuction]);
+  
 
   const isFormDataValid = (data) => {
     if (
@@ -115,7 +128,7 @@ function CreateAndUpdatePost({ onPostCreated, showPopup, closePopup, post, onPos
       return;
     }
 
-    if (post) {
+    if (post !== undefined) {
       try {
         const response = await authApi().put(
           `${endpoints["posts"]}${post.id}/`,
@@ -123,11 +136,12 @@ function CreateAndUpdatePost({ onPostCreated, showPopup, closePopup, post, onPos
         );
         if (response.status === 200) {
           onPostUpdate();
-          closePopup()
+          closePopup();
           setFormData({
             title: "",
             content: "",
             image: "",
+            startPrice: "",
           });
           console.log("Post updated successfully");
         } else if (response.status === 500) {
@@ -144,11 +158,12 @@ function CreateAndUpdatePost({ onPostCreated, showPopup, closePopup, post, onPos
 
         if (response.status === 201) {
           onPostCreated();
-          closePopup()
+          closePopup();
           setFormData({
             title: "",
             content: "",
             image: "",
+            startPrice: "",
           });
           setError("");
         } else {
@@ -159,6 +174,19 @@ function CreateAndUpdatePost({ onPostCreated, showPopup, closePopup, post, onPos
       }
     }
   };
+
+  const handleCheckAuctionChange = () => {
+    setCheckAuction((prevCheck) => !prevCheck);
+    
+    setFormData((prevData) => ({
+      ...prevData,
+      startPrice: checkAuction ?  0 : formData.startPrice,
+      auctionStatus: checkAuction === true ? 2 : 1,
+    }));
+  };
+
+  console.log(checkAuction)
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -193,6 +221,7 @@ function CreateAndUpdatePost({ onPostCreated, showPopup, closePopup, post, onPos
                     type="text"
                     placeholder="Nhập tiêu đề..."
                     onChange={handleInputChange}
+                    required
                   />
                 </Form.Group>
                 <Form.Group
@@ -206,15 +235,57 @@ function CreateAndUpdatePost({ onPostCreated, showPopup, closePopup, post, onPos
                     rows={3}
                     placeholder="Nhập nội dung..."
                     onChange={handleInputChange}
+                    required
                   />
                 </Form.Group>
+
                 <Form.Group
                   className="mb-3"
                   controlId="exampleForm.ControlTextarea1">
                   <Form.Label>Hình ảnh</Form.Label>
-                  <Form.Control onChange={handleImageChange} type="file" />
+                  <Form.Control required onChange={handleImageChange} type="file" />
                   <Image height={200} src={formData.image} />
                 </Form.Group>
+                <Form.Group>
+                  <Form.Check // prettier-ignore
+                    type="switch"
+                    className="mb-3"
+                    label="Có đấu giá"
+                    checked={checkAuction}
+                    onChange={handleCheckAuctionChange}
+                  />
+                </Form.Group>
+                {checkAuction === true ? (
+                  <>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Giá khởi điểm</Form.Label>
+                      <Form.Control
+                        value={formData.startPrice || ""}
+                        onChange={handleInputChange}
+                        type="text"
+                        name="startPrice"
+                        placeholder="Nhập giá khởi điểm"
+                      />
+                      <Form.Label>Thời gian bắt đầu</Form.Label>
+                      <Form.Control 
+                        name="auctionStartTime"
+                        value={formData.auctionStartTime || ""}
+                        onChange={handleInputChange}
+                        type="date"
+                      />
+                      <Form.Label>Thời gian kết thúc</Form.Label>
+                      <Form.Control 
+                        name="auctionEndTime"
+                        value={formData.auctionEndTime || ""}
+                        onChange={handleInputChange}
+                        type="date"
+                      />
+                    </Form.Group>
+                  </>
+                ) : (
+                  <></>
+                )}
+
                 <Button type="submit" disabled={loading}>
                   {loading === true ? "Đang tải" : "Đăng"}
                 </Button>
