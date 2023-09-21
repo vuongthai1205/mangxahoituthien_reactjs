@@ -4,7 +4,7 @@ import { MyUserContext } from "../../App";
 import CreateAndUpdatePost from "./CreateAndUpdatePost";
 import apiConfig, { authApi, endpoints } from "../../config/apiConfig";
 import DeletePost from "./DeletePost";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import ListAuction from "../Auctions/ListAuction";
 
 function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
@@ -21,7 +21,7 @@ function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
     content: "",
   });
   const [isEditing, setIsEditing] = useState(false);
-
+  const navigate = useNavigate();
   useEffect(() => {
     const handleLike = () => {
       if (
@@ -114,6 +114,7 @@ function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
       const response = await authApi().post(endpoints["auction"], formPrice);
 
       if (response.status === 201) {
+        setFormPrice({price: "",})
         alert("Đấu giá thành công");
       } else {
         alert("Không thành công");
@@ -149,19 +150,25 @@ function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
 
   const handlSubmitComment = async (e) => {
     e.preventDefault();
-    try {
-      const response = await authApi().post(
-        `${endpoints["comment"]}${post.id}/`,
-        formComment
-      );
-      if (response.status === 201) {
-        onPostUpdate();
-      } else {
-        console.log("lỗi rồi ");
+    if (!user) {
+      navigate("/login");
+    } else {
+      try {
+        const response = await authApi().post(
+          `${endpoints["comment"]}${post.id}/`,
+          formComment
+        );
+        if (response.status === 201) {
+          setFormComment({content: ""})
+          onPostUpdate();
+        } else {
+          console.log("lỗi rồi ");
+        }
+      } catch (ex) {
+        alert(ex);
       }
-    } catch (ex) {
-      alert(ex);
     }
+
     // Đây bạn có thể sử dụng giá trị của 'content' cho mục đích của bạn
 
     // Nếu bạn muốn làm gì đó khác với giá trị này, bạn có thể thực hiện ở đây
@@ -245,8 +252,12 @@ function ItemPost({ onPostUpdate, post, xuLyThichBaiViet }) {
           {user !== null && post.auctionStatus.id === 2 ? (
             auctioned === false ? (
               <>
-                <Card.Text>Ngày bắt đầu đấu giá: {post.startAuctionTime}</Card.Text>
-                <Card.Text>Ngày kết thúc đấu giá: {post.endAuctionTime}</Card.Text>
+                <Card.Text>
+                  Ngày bắt đầu đấu giá: {post.startAuctionTime}
+                </Card.Text>
+                <Card.Text>
+                  Ngày kết thúc đấu giá: {post.endAuctionTime}
+                </Card.Text>
                 <Card.Text>Giá Khởi điểm: {post.startPrice}</Card.Text>
                 <Form onSubmit={handleSubmitStartPrice} className="my-3">
                   <Form.Group>
