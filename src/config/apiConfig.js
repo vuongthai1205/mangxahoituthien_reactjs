@@ -2,7 +2,7 @@ import axios from "axios";
 import cookie from "react-cookies";
 
 const SERVER_CONTEXT = "/mangxahoituthien-1.0-SNAPSHOT";
-const SERVER = "http://52.62.205.228:8080/";
+const SERVER = "http://52.62.205.228:8080";
 
 export const endpoints = {  
     "register": `${SERVER_CONTEXT}/api/user/add/`,
